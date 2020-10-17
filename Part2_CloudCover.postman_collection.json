@@ -1,0 +1,497 @@
+{
+	"info": {
+		"_postman_id": "5c68cad7-d9ab-4aea-9193-a4f9a9231229",
+		"name": "Part2 CloudCover",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get_Badges",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "28dda35e-f3f6-4c94-b481-97cf5d3fb3be",
+						"exec": [
+							"var responseJson= pm.response.json()\r",
+							"//Status Code\r",
+							"tests[\"Status Code Check\"]=responseCode.code==200\r",
+							"\r",
+							"//Data type of the response field, All data type sets to be undefined here at the backend\r",
+							"pm.test(\"Check data type of the response fields\", () => \r",
+							"{\r",
+							"    pm.expect(responseJson).to.be.an(\"Object\")\r",
+							"    pm.expect(responseJson.badge_type).to.be.undefined\r",
+							"    pm.expect(responseJson.badge_id).not.to.be.a(\"Number\") //Negative\r",
+							"    \r",
+							"})\r",
+							"\r",
+							"//Number of items returned\r",
+							"ids = _.map(responseJson.items, ({ badge_id }) => ( badge_id ));\r",
+							"console.log(ids);\r",
+							"pm.test('Count of badges must be 30', function(){pm.expect(ids.count()).is.equal(30)})\r",
+							"\r",
+							"// Response Time should not greater than 5000ms\r",
+							"pm.test('Response time should not be greater than 5000ms', function()\r",
+							"{\r",
+							"    pm.expect(pm.response.responseTime).to.be.below(5000)\r",
+							"})\r",
+							"\r",
+							"// Response size of body and headers should not greater than 1000 KB\r",
+							"ResponseSize= pm.response.responseSize\r",
+							"console.log(\"ResponseSize==>\",ResponseSize)\r",
+							"pm.test('Response size of the (body and headers) should not be greater than 1000 Bytes', function()\r",
+							"{\r",
+							"  pm.expect(ResponseSize).to.be.below(10000)\r",
+							"})\r",
+							"\r",
+							"// Check required header is present\r",
+							"\r",
+							"pm.test(\"Date header is present\", () => {\r",
+							"  pm.response.to.have.header(\"date\");\r",
+							"});\r",
+							"\r",
+							"// Check for any unexptecd response if we have bad parameters passed\r",
+							"tests[\"Check for unexptecd response\"]=!(responseBody.has(\"error_id\"))\r",
+							"\r",
+							"// Check for empty response\r",
+							"pm.test(\"Check if response is not empty\", function() {\r",
+							"  pm.expect(responseJson.items).to.be.not.empty});\r",
+							"\r",
+							"// Get the badge ID and pass to {GetBadges_IDs} requests\r",
+							"//jsonData= JSON.parse(responseBody)\r",
+							"badge_id = responseJson.items[1].badge_id\r",
+							"console.log(badge_id)\r",
+							"pm.collectionVariables.set(\"bid\", badge_id);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.stackexchange.com/2.2/badges?order=desc&sort=rank&site=stackoverflow",
+					"protocol": "https",
+					"host": [
+						"api",
+						"stackexchange",
+						"com"
+					],
+					"path": [
+						"2.2",
+						"badges"
+					],
+					"query": [
+						{
+							"key": "order",
+							"value": "desc"
+						},
+						{
+							"key": "sort",
+							"value": "rank"
+						},
+						{
+							"key": "site",
+							"value": "stackoverflow"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get_Badges_IDs_parameterized",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e45d7c77-0fdd-41bb-b515-d03b5db60609",
+						"exec": [
+							"var responseJson= pm.response.json()\r",
+							"//Number of items returned\r",
+							"ids = _.map(responseJson.items, ({ badge_id }) => ( badge_id ));\r",
+							"pm.test('Count of badges must be 1', function(){pm.expect(ids.count()).is.equal(1)})\r",
+							"\r",
+							"//Status Code\r",
+							"tests[\"Status Code Check\"]=responseCode.code==200\r",
+							"\r",
+							"// Validate processed Id is same as it written in response\r",
+							"badge_id= parseInt(pm.collectionVariables.get('bid'));\r",
+							"console.log(badge_id)\r",
+							"pm.test(\"Validate the expected badge ID in response\", function()\r",
+							"{\r",
+							"pm.expect(responseJson.items[0].badge_id).to.eql(5966)\r",
+							"})\r",
+							"\r",
+							"// Validate schema of the response using ajv\r",
+							"const schema = {\r",
+							"    \"type\":\"object\",\r",
+							"    \"properties\": {\r",
+							"        \"quota_max\": {\"type\":\"number\"},\r",
+							"         \"items\": {\r",
+							"             \"type\":\"array\",\r",
+							"             \"maxItems\":1, //Check max items in array\r",
+							"             \"items\": {\r",
+							"                 \"type\":\"object\",\r",
+							"                  \"properties\": {\r",
+							"                      \"badge_type\": {\"type\":\"string\"},\r",
+							"                      \"award_count\": {\"type\":\"number\"},\r",
+							"                      \"badge_id\": {\"type\":\"number\"},\r",
+							"\r",
+							"                  },\r",
+							"                  \"required\":[\"badge_id\"]\r",
+							"             }\r",
+							"         }\r",
+							"        },\r",
+							"        \"required\":[\"quota_max\"]\r",
+							"    };\r",
+							"pm.test('Schema is valid', function() {\r",
+							"  pm.response.to.have.jsonSchema(schema);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.stackexchange.com/2.2/badges/5966?order=desc&sort=rank&site=stackoverflow",
+					"protocol": "https",
+					"host": [
+						"api",
+						"stackexchange",
+						"com"
+					],
+					"path": [
+						"2.2",
+						"badges",
+						"5966"
+					],
+					"query": [
+						{
+							"key": "order",
+							"value": "desc"
+						},
+						{
+							"key": "sort",
+							"value": "rank"
+						},
+						{
+							"key": "site",
+							"value": "stackoverflow"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get_Badges_IDs_HardCoded",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "464188d7-3774-4e09-96ea-ee07467555a4",
+						"exec": [
+							"var responseJson= pm.response.json()\r",
+							"arraysize= responseJson.items.length\r",
+							"if (arraysize==1)\r",
+							"{\r",
+							"    tests[\"Valid Id Passed\"]=true // Valid id= 5967\r",
+							"} else {\r",
+							"    tests[\"InValid Id Passed\"]=false // Invalid ID= 5967999\r",
+							"}\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.stackexchange.com/2.2/badges/5967999?order=desc&sort=rank&site=stackoverflow",
+					"protocol": "https",
+					"host": [
+						"api",
+						"stackexchange",
+						"com"
+					],
+					"path": [
+						"2.2",
+						"badges",
+						"5967999"
+					],
+					"query": [
+						{
+							"key": "order",
+							"value": "desc"
+						},
+						{
+							"key": "sort",
+							"value": "rank"
+						},
+						{
+							"key": "site",
+							"value": "stackoverflow"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get_BadgeNames",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "a1bdf3a6-937f-4e6e-b4b7-64b800cdad7f",
+						"exec": [
+							"var responseJson= pm.response.json()\r",
+							"//Status Code\r",
+							"tests[\"Status Code Check\"]=responseCode.code==200\r",
+							"\r",
+							"//Number of items returned\r",
+							"ids = _.map(responseJson.items, ({ badge_id }) => ( badge_id ));\r",
+							"console.log(ids);\r",
+							"pm.test('Count of badges must be 30', function(){pm.expect(ids.count()).is.equal(30)})\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.stackexchange.com/2.2/badges/name?order=desc&sort=rank&site=stackoverflow",
+					"protocol": "https",
+					"host": [
+						"api",
+						"stackexchange",
+						"com"
+					],
+					"path": [
+						"2.2",
+						"badges",
+						"name"
+					],
+					"query": [
+						{
+							"key": "order",
+							"value": "desc"
+						},
+						{
+							"key": "sort",
+							"value": "rank"
+						},
+						{
+							"key": "site",
+							"value": "stackoverflow"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get_Bagdge_Recipients",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "ab6dfd82-de4c-4c00-ba6b-c255f1de3f0b",
+						"exec": [
+							"var responseJson= pm.response.json()\r",
+							"//Status Code\r",
+							"tests[\"Status Code Check\"]=responseCode.code==200\r",
+							"\r",
+							"user = _.map(responseJson.items, ({ user }) => ( user ));\r",
+							"console.log(user);\r",
+							"pm.test('Count of badge Recipients must be 30', function(){pm.expect(user.count()).is.equal(30)})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.stackexchange.com/2.2/badges/recipients?site=stackoverflow",
+					"protocol": "https",
+					"host": [
+						"api",
+						"stackexchange",
+						"com"
+					],
+					"path": [
+						"2.2",
+						"badges",
+						"recipients"
+					],
+					"query": [
+						{
+							"key": "site",
+							"value": "stackoverflow"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get_Badge_Id_Recipients",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "6bf08516-9858-4d7c-ad2d-63283d774c42",
+						"exec": [
+							"var responseJson= pm.response.json()\r",
+							"//Status Code\r",
+							"tests[\"Status Code Check\"]=responseCode.code==200\r",
+							"\r",
+							"user = _.map(responseJson.items, ({ user }) => ( user ));\r",
+							"console.log(user);\r",
+							"pm.test('Count of badge Recipients must be 1', function(){pm.expect(user.count()).is.equal(2)})\r",
+							"\r",
+							"// Validate processed Id is same as it written in response\r",
+							"badge_id= parseInt(pm.collectionVariables.get('bid'));\r",
+							"console.log(badge_id)\r",
+							"pm.test(\"Validate the expected badge ID in response\", function()\r",
+							"{\r",
+							"pm.expect(responseJson.items[0].badge_id).to.eql(5966)\r",
+							"})\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.stackexchange.com/2.2/badges/5966/recipients?site=stackoverflow",
+					"protocol": "https",
+					"host": [
+						"api",
+						"stackexchange",
+						"com"
+					],
+					"path": [
+						"2.2",
+						"badges",
+						"5966",
+						"recipients"
+					],
+					"query": [
+						{
+							"key": "site",
+							"value": "stackoverflow"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get_Badge_Tags",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "d2cee8ca-9f97-40f5-bde1-554920860ffe",
+						"exec": [
+							"var responseJson= pm.response.json()\r",
+							"//Status Code\r",
+							"tests[\"Status Code Check\"]=responseCode.code==200\r",
+							"\r",
+							"badgename = _.map(responseJson.items, ({ name }) => ( name ));\r",
+							"console.log(badgename);\r",
+							"pm.test('Count of badge tags must be 30', function(){pm.expect(badgename.count()).is.equal(30)})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://api.stackexchange.com/2.2/badges/tags?order=desc&sort=rank&site=stackoverflow",
+					"protocol": "https",
+					"host": [
+						"api",
+						"stackexchange",
+						"com"
+					],
+					"path": [
+						"2.2",
+						"badges",
+						"tags"
+					],
+					"query": [
+						{
+							"key": "order",
+							"value": "desc"
+						},
+						{
+							"key": "sort",
+							"value": "rank"
+						},
+						{
+							"key": "site",
+							"value": "stackoverflow"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "aaa000ba-59b9-4bd2-a813-c609d4e5b523",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "9d33fbb3-9a2d-4255-ad70-341832a61d64",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "b3024ee1-a0f6-4d45-a3da-d03d2f2434b7",
+			"key": "url",
+			"value": ""
+		},
+		{
+			"id": "401f3e70-05f8-4ec6-a9df-f8cac969bf6f",
+			"key": "bid",
+			"value": ""
+		}
+	],
+	"protocolProfileBehavior": {}
+}
