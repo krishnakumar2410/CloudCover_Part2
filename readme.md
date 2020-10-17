@@ -1,4 +1,4 @@
-# Part 1- API Automation Instructions
+# Part 2- API Automation Instructions
 
 # Tools/Technology Use
 - Postman tool
