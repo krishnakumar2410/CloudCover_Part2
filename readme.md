@@ -5,7 +5,7 @@
 - Framework: Chai BDD
 
 1. Install Postman tool if not already installed
-2. Import downloaded json file
+2. Import downloaded json file [Part2_CloudCover.postman_collection.json]
 3. Click on runner
 4. Selection downloaded collection
 5. Set delay for 3ms if needed [Not required here]
@@ -37,7 +37,7 @@ I have also creted parametrize colelction where I have parametrize below paramet
 - bid: This the the badge id which will be set from __Get_Badges__ request at collection level, which further will be used under __Get_Badge_ID and __Get_Badge_ID_Recipient__ requests
 
 [Steps to run]
-1. Import downloaded json file
+1. Import downloaded json file [Part2_WithParametrize_CloudCover.postman_collection.json]
 2. Create below variable at collection level 
 - url: https://api.stackexchange.com
 - bid: 5966 [This will be set from __Get_Badges__ request]
